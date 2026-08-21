@@ -20,14 +20,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: EPHEMERAL TEST — write a marker file and report disk state
+      - name: EPHEMERAL TEST — check for prior marker, then plant a new one
         run: |
-          echo "Writing marker file to confirm ephemeral runner behavior..."
-          echo "planted-by-run-${{ github.run_id }}-at-$(date -u +%s)" > /tmp/docutrust-ephemeral-marker.txt
-          cat /tmp/docutrust-ephemeral-marker.txt
+          echo "Checking for marker file left by a previous run..."
+          if [ -f /tmp/docutrust-ephemeral-marker.txt ]; then
+            echo "MARKER FOUND (unexpected): $(cat /tmp/docutrust-ephemeral-marker.txt)"
+          else
+            echo "MARKER NOT FOUND — no file at /tmp/docutrust-ephemeral-marker.txt"
+          fi
           echo "Runner hostname: $(hostname)"
           echo "Runner machine ID (if available):"
           cat /etc/machine-id 2>/dev/null || echo "no /etc/machine-id"
+          echo "Planting a fresh marker for this run..."
+          echo "planted-by-run-${{ github.run_id }}-at-$(date -u +%s)" > /tmp/docutrust-ephemeral-marker.txt
+
 
       - name: Compute lowercase image name
         id: image
