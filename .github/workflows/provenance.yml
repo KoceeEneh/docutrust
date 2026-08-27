@@ -34,14 +34,6 @@ jobs:
           echo "Planting a fresh marker for this run..."
           echo "planted-by-run-${{ github.run_id }}-at-$(date -u +%s)" > /tmp/docutrust-ephemeral-marker.txt
 
-      - name: Install cosign
-        uses: sigstore/cosign-installer@v3
-
-      - name: Sign the image with Cosign (keyless)
-        run: |
-          cosign sign --yes ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}
-
-
       - name: Compute lowercase image name
         id: image
         run: |
@@ -68,3 +60,10 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign the image with Cosign (keyless)
+        run: |
+          cosign sign --yes ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}
