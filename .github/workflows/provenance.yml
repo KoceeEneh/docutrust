@@ -67,3 +67,22 @@ jobs:
       - name: Sign the image with Cosign (keyless)
         run: |
           cosign sign --yes ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}
+
+      - name: Record cosign version
+        run: cosign version
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Generate SBOM from the pushed image
+        run: |
+          syft ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }} \
+            -o spdx-json > sbom.json
+          echo "Packages found: $(jq '.packages | length' sbom.json)"
+
+      - name: Attest SBOM with Cosign (workflow identity)
+        run: |
+          cosign attest --yes \
+            --predicate sbom.json \
+            --type spdxjson \
+            ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}
