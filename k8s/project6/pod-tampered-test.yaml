@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: docutrust-tampered-test
+spec:
+  containers:
+    - name: docutrust
+      image: ghcr.io/koceeeneh/docutrust@sha256:cd884268fdf7fe5be6107532858ddb6a845e657209ed20ba422648ee7c86f0c6

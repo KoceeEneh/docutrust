@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: docutrust-signed-test
+spec:
+  containers:
+    - name: docutrust
+      image: ghcr.io/koceeeneh/docutrust@sha256:14c424be8b733f0eadb241745bbded59db441099efd8d5e06f79412a0a33f7a3
