@@ -4,3 +4,7 @@ node_modules
 *.log
 timeout-*
 crash-*
+
+# Local scratch from Chain B verification work
+sbom.json
+att-chain.pem
