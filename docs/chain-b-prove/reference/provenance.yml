@@ -1,0 +1,78 @@
+name: Build, Publish, and Attest Provenance
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-publish-attest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute lowercase image name
+        id: image
+        run: |
+          echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.sha }}
+
+      - name: Generate build provenance attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.5.2'
+
+      - name: Sign the image with Cosign (keyless)
+        run: |
+          cosign sign --yes ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}
+
+      - name: Record cosign version
+        run: cosign version
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+        with:
+          syft-version: v1.42.3
+
+      - name: Generate SBOM from the pushed image
+        run: |
+          syft ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }} \
+            -o spdx-json > sbom.json
+          echo "Packages found: $(jq '.packages | length' sbom.json)"
+
+      - name: Attest SBOM with Cosign (workflow identity)
+        run: |
+          cosign attest --yes \
+            --predicate sbom.json \
+            --type spdxjson \
+            ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@${{ steps.push.outputs.digest }}

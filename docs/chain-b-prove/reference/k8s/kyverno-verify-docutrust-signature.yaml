@@ -1,0 +1,26 @@
+# Reference copy. Project 6, Deliverable 2.
+# Replace <owner> / <owner-lowercase> with your GitHub account before applying.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-docutrust-signature
+spec:
+  validationFailureAction: Enforce
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: verify-docutrust-image-signature
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/<owner-lowercase>/docutrust*"
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/<owner>/docutrust/.github/workflows/provenance.yml@refs/heads/main"
+                    issuer: "https://token.actions.githubusercontent.com"
+                    rekor:
+                      url: https://rekor.sigstore.dev

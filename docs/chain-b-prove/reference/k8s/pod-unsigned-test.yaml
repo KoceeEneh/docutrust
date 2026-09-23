@@ -1,0 +1,10 @@
+# Reference copy. Project 6 admission test pod (unsigned image).
+# Replace the digest with the one from your own build.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: docutrust-unsigned-test
+spec:
+  containers:
+    - name: docutrust
+      image: ghcr.io/<owner-lowercase>/docutrust@sha256:<unsigned-image-digest>

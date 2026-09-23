@@ -1,0 +1,10 @@
+# Reference copy. Project 6 admission test pod (tampered image).
+# Replace the digest with the one from your own build.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: docutrust-tampered-test
+spec:
+  containers:
+    - name: docutrust
+      image: ghcr.io/<owner-lowercase>/docutrust@sha256:<tampered-image-digest>
